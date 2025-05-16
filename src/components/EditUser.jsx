@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../utils";
@@ -8,7 +8,6 @@ const EditUser = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [gender, setGender] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { id } = useParams();
   const [token, setToken] = useState("");
@@ -59,9 +58,17 @@ const EditUser = () => {
     try {
       await axiosJWT.put(
         `${BASE_URL}/users/${id}`,
-        { name, email, gender, password },
+        { name, email, gender },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      /*
+        Kenapa meskipun sudah diberi header authorization pada bagian interceptor,
+        tetap harus diberi header auth seperti kode di atas?
+        Karena header auth pada interceptor hanya diberikan jika token telah expired (>30 detik)
+
+        Jika token belum expired, maka akan menggunakan token yg ada di state
+      */
       navigate("/dashboard");
     } catch (error) {
       console.log(error);
@@ -73,9 +80,10 @@ const EditUser = () => {
       const response = await axiosJWT.get(`${BASE_URL}/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setName(response.data.data.name);
-      setEmail(response.data.data.email);
-      setGender(response.data.data.gender);
+      const { name, email, gender } = response.data.data;
+      setName(name);
+      setEmail(email);
+      setGender(gender);
     } catch (error) {
       console.log(error);
     }
@@ -121,18 +129,6 @@ const EditUser = () => {
                   <option value="Female">Female</option>
                 </select>
               </div>
-            </div>
-          </div>
-          <div className="field">
-            <label className="label">Password</label>
-            <div className="control">
-              <input
-                type="password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-              />
             </div>
           </div>
           <div className="field">
